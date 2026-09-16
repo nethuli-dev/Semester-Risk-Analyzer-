@@ -36,6 +36,61 @@ const RISK_ATTENDANCE_PENALTY_WEIGHT = 0.5;
 
 const RISK_LEVELS = ['on-track', 'at-risk', 'failing'];
 
+// --- NL query / pipeline validator ---
+// The only stage types an LLM-generated pipeline may use. Anything else
+// ($out, $merge, $function, $accumulator, $where, $lookup, $graphLookup,
+// ...) is rejected outright.
+const ALLOWED_PIPELINE_STAGES = [
+  '$match',
+  '$group',
+  '$project',
+  '$sort',
+  '$limit',
+  '$addFields',
+  '$unwind',
+  '$count',
+  '$bucket',
+];
+
+// Expression-level operators that can execute arbitrary code or legacy JS
+// even inside an otherwise-allowed stage (e.g. $function nested inside a
+// $project). Checked recursively everywhere in the pipeline, not just at
+// the stage level, since the stage whitelist alone wouldn't catch these.
+const DANGEROUS_EXPRESSION_OPERATORS = ['$function', '$accumulator', '$where'];
+
+// Fail-closed allowlist of aggregation expression operators. A $-prefixed
+// key encountered anywhere that isn't a stage name and isn't in this list
+// is rejected as an unknown operator, rather than assumed safe.
+const ALLOWED_EXPRESSION_OPERATORS = [
+  '$eq', '$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin',
+  '$and', '$or', '$not', '$nor', '$exists', '$type', '$expr',
+  '$add', '$subtract', '$multiply', '$divide', '$mod', '$abs', '$ceil', '$floor', '$round', '$trunc',
+  '$sum', '$avg', '$min', '$max', '$push', '$first', '$last',
+  '$size', '$arrayElemAt', '$filter', '$map', '$slice', '$concatArrays',
+  '$concat', '$substr', '$substrCP', '$toUpper', '$toLower', '$trim', '$split', '$toString',
+  '$year', '$month', '$dayOfMonth', '$dateToString', '$dateFromString', '$dateDiff',
+  '$cond', '$ifNull', '$switch',
+  '$literal', '$toBool', '$toInt', '$toDouble', '$toDecimal', '$convert', '$meta',
+];
+
+// System variables (not document fields) allowed in "$$name" expressions.
+const ALLOWED_SYSTEM_VARIABLES = ['$$NOW', '$$ROOT', '$$CURRENT', '$$REMOVE'];
+
+const MAX_PIPELINE_STAGES = 10;
+// Each level of object AND array wrapping counts separately (e.g. a single
+// {$multiply: [{$divide: [...]}, 100]} expression is depth ~4 on its own),
+// so this needs real headroom for legitimate nested expressions — it's
+// sized to comfortably allow those while still rejecting pathological
+// nesting (an adversarial pipeline built from repeated wrapping quickly
+// exceeds 20+).
+const MAX_PIPELINE_DEPTH = 12;
+const QUERY_TIMEOUT_MS = 5000;
+const QUERY_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const QUERY_RATE_LIMIT_MAX_REQUESTS = 20;
+// A single retry with the validator's rejection reason fed back to the
+// LLM, then a clear user-facing error — never an unbounded retry loop.
+const QUERY_MAX_RETRIES = 1;
+
 module.exports = {
   BCRYPT_COST_FACTOR,
   ACCESS_TOKEN_EXPIRES,
@@ -52,4 +107,14 @@ module.exports = {
   RISK_LOW_ATTENDANCE_THRESHOLD,
   RISK_ATTENDANCE_PENALTY_WEIGHT,
   RISK_LEVELS,
+  ALLOWED_PIPELINE_STAGES,
+  DANGEROUS_EXPRESSION_OPERATORS,
+  ALLOWED_EXPRESSION_OPERATORS,
+  ALLOWED_SYSTEM_VARIABLES,
+  MAX_PIPELINE_STAGES,
+  MAX_PIPELINE_DEPTH,
+  QUERY_TIMEOUT_MS,
+  QUERY_RATE_LIMIT_WINDOW_MS,
+  QUERY_RATE_LIMIT_MAX_REQUESTS,
+  QUERY_MAX_RETRIES,
 };
