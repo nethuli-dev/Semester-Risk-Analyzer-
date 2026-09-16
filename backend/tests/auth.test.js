@@ -1,31 +1,6 @@
-require('dotenv').config();
-const dns = require('dns');
-const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const request = require('supertest');
-
-// This machine's default DNS resolver intermittently fails SRV lookups for
-// the Atlas hostname specifically (confirmed: plain A-record lookups for
-// other domains succeed throughout the same outage) while public resolvers
-// handle the same query reliably. dns.setServers() only redirects Node's
-// dns.resolve*() family (used for the SRV/TXT lookup mongodb+srv:// needs);
-// dns.lookup() — used for the individual shard hostnames afterwards — goes
-// through the OS resolver regardless, so it's patched too, with the
-// original behavior kept as a fallback if resolve4 itself fails.
-dns.setServers(['8.8.8.8', '1.1.1.1']);
-const originalLookup = dns.lookup;
-dns.lookup = (hostname, options, callback) => {
-  if (typeof options === 'function') {
-    callback = options;
-    options = {};
-  }
-  dns.resolve4(hostname, (err, addresses) => {
-    if (err || !addresses || !addresses.length) {
-      return originalLookup(hostname, options, callback);
-    }
-    callback(null, addresses[0], 4);
-  });
-};
+const { connectTestDb, disconnectTestDb } = require('./testDb');
 
 process.env.JWT_ACCESS_SECRET = 'test-access-secret';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
@@ -35,40 +10,12 @@ process.env.FRONTEND_ORIGIN = 'http://localhost:5173';
 
 const app = require('../src/app');
 
-// Tests run against a dedicated test database on the same Atlas cluster as
-// dev, not a local in-memory mongod. mongodb-memory-server's locally-spawned
-// mongod fails its initial handshake against this driver/Node version
-// ("Missing required sub-document 'driver' in the client metadata document")
-// while Atlas — running the same driver version — connects fine, so the
-// fault is in the local-handshake path, not our code. Swapping the db name
-// keeps this from ever touching real dev/prod data.
-function testDbUri() {
-  return process.env.MONGODB_URI.replace(/\/([^/?]+)(\?|$)/, '/semester-risk-analyzer-test$2');
-}
-
-// This machine's network intermittently fails the DNS lookup mongodb+srv://
-// depends on (transient, not app-related — same URI connects fine most of
-// the time). A few short retries absorb that without masking a real outage:
-// after this many consecutive failures, the error is real and should surface.
-async function connectWithRetries(uri, attempts = 3, delayMs = 3000) {
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    try {
-      await mongoose.connect(uri, { serverSelectionTimeoutMS: 15000 });
-      return;
-    } catch (err) {
-      if (attempt === attempts) throw err;
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-  }
-}
-
 beforeAll(async () => {
-  await connectWithRetries(testDbUri());
+  await connectTestDb();
 }, 60000);
 
 afterAll(async () => {
-  await mongoose.connection.dropDatabase();
-  await mongoose.disconnect();
+  await disconnectTestDb();
 }, 30000);
 
 describe('auth flow', () => {
@@ -107,7 +54,7 @@ describe('auth flow', () => {
   });
 
   test('protected route rejects requests with no token', async () => {
-    const res = await request(app).get('/api/protected-test');
+    const res = await request(app).get('/api/courses');
     expect(res.status).toBe(401);
   });
 
@@ -119,7 +66,7 @@ describe('auth flow', () => {
     );
 
     const res = await request(app)
-      .get('/api/protected-test')
+      .get('/api/courses')
       .set('Authorization', `Bearer ${expiredToken}`);
 
     expect(res.status).toBe(401);
@@ -135,10 +82,10 @@ describe('auth flow', () => {
     const { accessToken } = loginRes.body;
 
     const protectedRes = await agent
-      .get('/api/protected-test')
+      .get('/api/courses')
       .set('Authorization', `Bearer ${accessToken}`);
     expect(protectedRes.status).toBe(200);
-    expect(protectedRes.body.userId).toBeDefined();
+    expect(Array.isArray(protectedRes.body)).toBe(true);
 
     const refreshRes = await agent.post('/api/auth/refresh');
     expect(refreshRes.status).toBe(200);

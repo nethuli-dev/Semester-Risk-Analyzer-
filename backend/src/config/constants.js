@@ -12,6 +12,15 @@ const REFRESH_TOKEN_EXPIRES_MS = 30 * 24 * 60 * 60 * 1000;
 const LOGIN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 10;
 
+const ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused'];
+
+const GRADING_SCHEME_WEIGHT_TOTAL = 100;
+// Floating-point tolerance for weight sums (e.g. three categories at
+// 33.33/33.33/33.34 shouldn't fail on a rounding artifact).
+const GRADING_SCHEME_WEIGHT_TOLERANCE = 0.01;
+
+const MAX_CSV_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
+
 module.exports = {
   BCRYPT_COST_FACTOR,
   ACCESS_TOKEN_EXPIRES,
@@ -19,4 +28,8 @@ module.exports = {
   REFRESH_TOKEN_EXPIRES_MS,
   LOGIN_RATE_LIMIT_WINDOW_MS,
   LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
+  ATTENDANCE_STATUSES,
+  GRADING_SCHEME_WEIGHT_TOTAL,
+  GRADING_SCHEME_WEIGHT_TOLERANCE,
+  MAX_CSV_SIZE_BYTES,
 };

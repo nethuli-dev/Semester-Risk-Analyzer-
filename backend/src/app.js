@@ -5,6 +5,8 @@ const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
 
 const authRoutes = require('./routes/authRoutes');
+const courseRoutes = require('./routes/courseRoutes');
+const { byIdRouter: gradeByIdRoutes } = require('./routes/gradeRoutes');
 const authMiddleware = require('./middleware/authMiddleware');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -20,13 +22,8 @@ app.use(cookieParser());
 app.use(mongoSanitize());
 
 app.use('/api/auth', authRoutes);
-
-// Temporary Phase-1 verification route: proves authMiddleware correctly
-// identifies the caller from a verified access token. Superseded by real
-// protected resources (courses, grades, ...) in Phase 2.
-app.get('/api/protected-test', authMiddleware, (req, res) => {
-  res.json({ message: 'You are authenticated', userId: req.user.id });
-});
+app.use('/api/courses', authMiddleware, courseRoutes);
+app.use('/api/grades', authMiddleware, gradeByIdRoutes);
 
 app.use(errorHandler);
 
