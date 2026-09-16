@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import AskAIPage from './pages/AskAIPage';
+import ReportsPage from './pages/ReportsPage';
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ export default function App() {
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/ask" element={<AskAIPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

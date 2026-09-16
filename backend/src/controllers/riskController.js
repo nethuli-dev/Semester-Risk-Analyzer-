@@ -64,4 +64,4 @@ async function getRiskHistory(req, res, next) {
   }
 }
 
-module.exports = { getRisk, getRiskHistory };
+module.exports = { getRisk, getRiskHistory, computeAndStoreRisk };

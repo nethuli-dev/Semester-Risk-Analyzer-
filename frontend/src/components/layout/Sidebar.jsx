@@ -1,13 +1,13 @@
 import { NavLink } from 'react-router-dom';
 
-// Reports / Profile aren't built yet (later phases) — shown as disabled
-// entries so the nav shell matches the app's final information
+// Profile isn't built yet (no phase currently calls for it) — shown as a
+// disabled entry so the nav shell matches the app's final information
 // architecture without implying functionality that doesn't exist.
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: '📊' },
   { to: '/courses', label: 'Courses', icon: '📚' },
   { to: '/ask', label: 'Ask AI', icon: '💬' },
-  { label: 'Reports', icon: '📄', disabled: true },
+  { to: '/reports', label: 'Reports', icon: '📄' },
   { label: 'Profile', icon: '👤', disabled: true },
 ];
 

@@ -1,18 +1,6 @@
-const { GoogleGenAI } = require('@google/genai');
+const { getClient, MODEL } = require('./geminiClient');
 const { SCHEMA_MAP } = require('./pipelineValidator');
 const { ALLOWED_PIPELINE_STAGES } = require('../config/constants');
-
-const MODEL = 'gemini-3.5-flash-lite';
-
-// Lazily constructed so a missing GEMINI_API_KEY only breaks the one
-// request that needs it, not the whole app at boot.
-let client;
-function getClient() {
-  if (!client) {
-    client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  }
-  return client;
-}
 
 // Structured-output schema: forces the model to return exactly this shape
 // (no prose, no markdown fences) rather than hoping it follows instructions.
