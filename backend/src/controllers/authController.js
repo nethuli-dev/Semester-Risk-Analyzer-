@@ -157,4 +157,21 @@ async function logout(req, res, next) {
   }
 }
 
-module.exports = { register, login, refresh, logout, registerSchema, loginSchema };
+// Not in PROJECT_PLAN's original API table — added because the frontend's
+// silent session-restore-on-reload (refresh the access token via the
+// httpOnly cookie, then need *something* to populate the UI with) has
+// nothing else to call: /auth/refresh intentionally returns only a new
+// access token, never user data.
+async function me(req, res, next) {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+    res.json({ user: { id: user._id, name: user.name, email: user.email } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { register, login, refresh, logout, me, registerSchema, loginSchema };

@@ -21,6 +21,21 @@ const GRADING_SCHEME_WEIGHT_TOLERANCE = 0.01;
 
 const MAX_CSV_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 
+// Below this trajectory grade (%), a course is flagged failing regardless
+// of attendance.
+const RISK_FAILING_THRESHOLD = 60;
+// Below this trajectory grade (%), a course is flagged at-risk (unless
+// already failing).
+const RISK_AT_RISK_THRESHOLD = 75;
+// Below this attendance rate (%), attendance itself becomes a risk factor,
+// independent of grades.
+const RISK_LOW_ATTENDANCE_THRESHOLD = 75;
+// Risk-score points added per percentage point of attendance shortfall
+// below RISK_LOW_ATTENDANCE_THRESHOLD.
+const RISK_ATTENDANCE_PENALTY_WEIGHT = 0.5;
+
+const RISK_LEVELS = ['on-track', 'at-risk', 'failing'];
+
 module.exports = {
   BCRYPT_COST_FACTOR,
   ACCESS_TOKEN_EXPIRES,
@@ -32,4 +47,9 @@ module.exports = {
   GRADING_SCHEME_WEIGHT_TOTAL,
   GRADING_SCHEME_WEIGHT_TOLERANCE,
   MAX_CSV_SIZE_BYTES,
+  RISK_FAILING_THRESHOLD,
+  RISK_AT_RISK_THRESHOLD,
+  RISK_LOW_ATTENDANCE_THRESHOLD,
+  RISK_ATTENDANCE_PENALTY_WEIGHT,
+  RISK_LEVELS,
 };
