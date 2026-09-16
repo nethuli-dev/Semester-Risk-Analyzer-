@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import AskAIPage from './pages/AskAIPage';
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
+              <Route path="/ask" element={<AskAIPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
