@@ -33,7 +33,7 @@ Companion file: `PROJECT_PLAN.md` (read that first — it has the full architect
 ## 3. Setup
 
 **Scaffolding:**
-- `backend/`: `npm init`, install `express mongoose bcrypt jsonwebtoken cookie-parser cors helmet express-rate-limit express-mongo-sanitize zod multer csv-parse @anthropic-ai/sdk dotenv`, dev deps `nodemon jest supertest`.
+- `backend/`: `npm init`, install `express mongoose bcrypt jsonwebtoken cookie-parser cors helmet express-rate-limit express-mongo-sanitize zod multer csv-parse @google/genai dotenv`, dev deps `nodemon jest supertest`. (Originally `@anthropic-ai/sdk` per PROJECT_PLAN.md — switched to Gemini's free tier; see that doc's §4 LLM row.)
 - `frontend/`: `npm create vite@latest frontend -- --template react`, install `react-router-dom @tanstack/react-query axios recharts tailwindcss`.
 
 **`backend/.env.example`:**
@@ -44,7 +44,7 @@ JWT_ACCESS_SECRET=            # long random string
 JWT_REFRESH_SECRET=           # different long random string
 JWT_ACCESS_EXPIRES=15m
 JWT_REFRESH_EXPIRES=30d
-ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
 FRONTEND_ORIGIN=http://localhost:5173
 ```
 

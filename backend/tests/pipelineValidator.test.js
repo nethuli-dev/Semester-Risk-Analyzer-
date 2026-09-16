@@ -61,6 +61,48 @@ describe('pipelineValidator: one passing case per allowed stage', () => {
   });
 });
 
+describe('pipelineValidator: field shape evolves through the pipeline', () => {
+  test('a $sort after $group can reference the group stage\'s own computed output field', () => {
+    // Real bug caught by live testing against Gemini: "which course has my
+    // lowest average score?" generates $group (introducing a computed
+    // "averagePercent" field) followed by $sort on that same field — this
+    // must NOT be rejected as an "unknown field" just because
+    // averagePercent isn't in gradeEntries' original schema.
+    const result = validatePipeline(
+      [
+        { $group: { _id: '$courseId', averagePercent: { $avg: { $divide: ['$score', '$maxScore'] } } } },
+        { $sort: { averagePercent: 1 } },
+        { $limit: 1 },
+      ],
+      { collection: 'gradeEntries', userId }
+    );
+    expect(result.valid).toBe(true);
+  });
+
+  test('a field introduced by $group is NOT retroactively valid for a stage before it', () => {
+    const result = validatePipeline(
+      [
+        { $sort: { averagePercent: 1 } },
+        { $group: { _id: '$courseId', averagePercent: { $avg: '$score' } } },
+      ],
+      { collection: 'gradeEntries', userId }
+    );
+    expect(result.valid).toBe(false);
+    expect(result.reason).toMatch(/Unknown field "averagePercent"/);
+  });
+
+  test('$project computed field name becomes referenceable in a later $sort', () => {
+    const result = validatePipeline(
+      [
+        { $project: { percent: { $multiply: [{ $divide: ['$score', '$maxScore'] }, 100] } } },
+        { $sort: { percent: -1 } },
+      ],
+      { collection: 'gradeEntries', userId }
+    );
+    expect(result.valid).toBe(true);
+  });
+});
+
 describe('pipelineValidator: malicious/invalid pipelines rejected for the right reason', () => {
   test('rejects $out (data exfiltration / write to another collection)', () => {
     const result = validatePipeline(

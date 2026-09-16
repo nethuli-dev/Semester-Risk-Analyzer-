@@ -8,6 +8,7 @@ const authRoutes = require('./routes/authRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const { byIdRouter: gradeByIdRoutes } = require('./routes/gradeRoutes');
 const riskRoutes = require('./routes/riskRoutes');
+const queryRoutes = require('./routes/queryRoutes');
 const authMiddleware = require('./middleware/authMiddleware');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -26,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/courses', authMiddleware, courseRoutes);
 app.use('/api/grades', authMiddleware, gradeByIdRoutes);
 app.use('/api/risk', authMiddleware, riskRoutes);
+app.use('/api', authMiddleware, queryRoutes);
 
 app.use(errorHandler);
 

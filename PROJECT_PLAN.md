@@ -46,7 +46,7 @@ If you only add three things to make this stand out further: (1) a small test su
 | Backend | Node.js + Express | MongoDB aggregation pipelines are native JS arrays/objects. In Node, the LLM's JSON output, your validator, and the MongoDB driver all speak the same data structure with zero serialization/marshaling — in Python you'd be converting between JSON strings and dicts at every boundary for no benefit. |
 | Database | MongoDB Atlas (free tier) | Chosen per project requirement. Good fit anyway: course/grade/attendance data is naturally document-shaped and doesn't need multi-table joins: `$lookup` is rarely even needed here. |
 | ODM | Mongoose | Schema validation + type coercion for the CRUD collections (courses, grades, attendance). The **query pipeline itself** is still built and validated by hand with the raw MongoDB driver — Mongoose's query builder isn't designed for dynamically validating arbitrary LLM-generated pipelines. |
-| LLM | Anthropic Claude API | Used for two *separate* jobs: (a) generating aggregation pipelines from NL questions, (b) writing the narrative semester report. Keep these as two distinct prompts/functions — don't conflate them. |
+| LLM | Google Gemini API (`gemini-2.5-flash`, via `@google/genai`) | Switched from the original Anthropic Claude choice — free tier, no budget available for a paid API key at build time. Used for two *separate* jobs: (a) generating aggregation pipelines from NL questions, (b) writing the narrative semester report. Keep these as two distinct prompts/functions — don't conflate them. The provider is an implementation detail here: the validator (not the LLM) is what actually guarantees safety, so this swap changes zero security properties of the system. |
 | Auth | JWT (access + refresh) + bcrypt | Standard, interview-legible pattern. Access token short-lived (15 min), refresh token longer-lived and revocable server-side (see §8). |
 | Frontend | React (Vite) + Tailwind CSS | Fast dev loop, and Tailwind's utility classes map cleanly onto the card-based dashboard layout in your reference image. |
 | Charts | Recharts | Backend sends raw data + a chart type (bar/line/scatter/donut), frontend renders it — keeps chart logic out of the backend and makes the dashboard interactive (hover tooltips, etc.) rather than static images. |
@@ -63,7 +63,7 @@ If you only add three things to make this stand out further: (1) a small test su
                                                │ HTTPS
                                                ▼
                                      ┌───────────────────┐
-                                     │  Claude API        │
+                                     │  Gemini API         │
                                      │  (pipeline gen +    │
                                      │   report writing)   │
                                      └───────────────────┘
@@ -78,7 +78,7 @@ If you only add three things to make this stand out further: (1) a small test su
 sequenceDiagram
     participant U as Student (browser)
     participant A as Express API
-    participant L as Claude API
+    participant L as Gemini API
     participant V as Pipeline Validator
     participant M as MongoDB
 
