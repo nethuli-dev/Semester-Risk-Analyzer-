@@ -15,7 +15,7 @@ You play a student who has just signed up. Everything you show is real: nothing 
 ## The script
 
 ### 1. Intro (20 s)
-Say: *"Students usually find out a course is going badly after the final. Semester Risk Analyzer shows it while there's still time. You log grades and attendance, it scores the risk per course, answers questions in plain English, and writes a report you can take to an advisor. The interesting part is that an AI can query the database safely."*
+Say: *"Students usually find out a course is going badly after the final. RiskLens shows it while there's still time. You log grades and attendance, it scores the risk per course, answers questions in plain English, and writes a report you can take to an advisor. The interesting part is that an AI can query the database safely."*
 
 ### 2. Create your account (30 s)
 - Open the app and click the **Create account** tab (top of the card). Fill in your name, email and password, and submit. Use *Show* to reveal the password while typing if you want the viewer to see it's a normal field.

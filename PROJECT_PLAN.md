@@ -1,4 +1,4 @@
-# PROJECT_PLAN.md — Semester Risk Analyzer
+# PROJECT_PLAN.md — RiskLens (originally "Semester Risk Analyzer")
 
 **Type:** Self-service AI-powered student performance & early-warning tool
 **Evolved from:** Project C (AI Data Analyst Agent) — same "NL question → generated query → validated → executed" core, repointed at MongoDB and a single-student use case.

@@ -1,6 +1,6 @@
-# Semester Risk Analyzer
+# RiskLens
 
-A full-stack web app that helps students see which courses are slipping **before** the final exam. Log grades and attendance, and the app computes a transparent risk score per course, charts it on a dashboard, answers plain-English questions about your data with an LLM, and writes a shareable semester report.
+RiskLens is a full-stack web app that helps students see which courses are slipping **before** the final exam. Log grades and attendance, and the app computes a transparent risk score per course, charts it on a dashboard, answers plain-English questions about your data with an LLM, and writes a shareable semester report.
 
 > Built as a portfolio project. The interesting parts are the **authentication flow**, the **per-user data isolation**, and the **pipeline validator** that makes it safe to run LLM-generated database queries.
 

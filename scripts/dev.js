@@ -38,4 +38,4 @@ function shutdown() {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-console.log('\nStarting Semester Risk Analyzer...\n  Web: http://localhost:5173\n  API: http://localhost:5050\n');
+console.log('\nStarting RiskLens...\n  Web: http://localhost:5173\n  API: http://localhost:5050\n');

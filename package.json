@@ -1,8 +1,8 @@
 {
-  "name": "semester-risk-analyzer",
+  "name": "risklens",
   "version": "1.0.0",
   "private": true,
-  "description": "Full-stack semester risk analyzer: risk scoring, dashboard, safe natural-language queries, AI reports.",
+  "description": "RiskLens: full-stack semester risk analyzer with risk scoring, dashboard, safe natural-language queries, AI reports.",
   "license": "MIT",
   "scripts": {
     "install:all": "npm --prefix backend install && npm --prefix frontend install",
