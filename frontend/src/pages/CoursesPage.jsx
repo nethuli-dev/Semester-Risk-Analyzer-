@@ -1,3 +1,4 @@
+import { invalidateRiskData } from '../utils/invalidate';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import client from '../api/client';
@@ -19,6 +20,7 @@ export default function CoursesPage() {
     mutationFn: (payload) => client.post('/courses', payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      invalidateRiskData(queryClient);
       setModalState(null);
     },
   });
@@ -27,13 +29,17 @@ export default function CoursesPage() {
     mutationFn: ({ id, payload }) => client.put(`/courses/${id}`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      invalidateRiskData(queryClient);
       setModalState(null);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => client.delete(`/courses/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['courses'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      invalidateRiskData(queryClient);
+    },
   });
 
   function handleDelete(course) {

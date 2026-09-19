@@ -1,8 +1,10 @@
 const { z } = require('zod');
+const mongoose = require('mongoose');
 const AttendanceRecord = require('../models/AttendanceRecord');
 const AppError = require('../utils/AppError');
 const { findOwnedCourseOrFail } = require('./courseController');
 const { ATTENDANCE_STATUSES } = require('../config/constants');
+const { parseAttendanceCsv } = require('../services/csvImporter');
 
 const createAttendanceSchema = z
   .object({
@@ -42,4 +44,40 @@ async function createAttendance(req, res, next) {
   }
 }
 
-module.exports = { listAttendance, createAttendance, createAttendanceSchema };
+async function importAttendance(req, res, next) {
+  try {
+    await findOwnedCourseOrFail(req.params.id, req.user.id);
+    if (!req.file) {
+      return next(new AppError('CSV file is required (field name: file)', 400));
+    }
+    const result = await parseAttendanceCsv(req.file.buffer, { userId: req.user.id, courseId: req.params.id });
+    // 207: a partial import is a normal outcome, reported per row.
+    res.status(207).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Scoped by userId AND courseId: another student's record id, or one from a
+// different course, is simply "not found".
+async function deleteAttendance(req, res, next) {
+  try {
+    await findOwnedCourseOrFail(req.params.id, req.user.id);
+    if (!mongoose.Types.ObjectId.isValid(req.params.recordId)) {
+      return next(new AppError('Attendance record not found', 404));
+    }
+    const record = await AttendanceRecord.findOneAndDelete({
+      _id: req.params.recordId,
+      userId: req.user.id,
+      courseId: req.params.id,
+    });
+    if (!record) {
+      return next(new AppError('Attendance record not found', 404));
+    }
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listAttendance, createAttendance, importAttendance, deleteAttendance, createAttendanceSchema };

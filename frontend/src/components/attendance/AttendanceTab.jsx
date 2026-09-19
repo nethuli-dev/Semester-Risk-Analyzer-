@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import client from '../../api/client';
 import Button from '../common/Button';
 import Spinner from '../common/Spinner';
+import CSVImportButton from '../grades/CSVImportButton';
+import { invalidateRiskData } from '../../utils/invalidate';
 
 const STATUSES = ['present', 'absent', 'late', 'excused'];
 
@@ -21,8 +23,17 @@ export default function AttendanceTab({ courseId }) {
     mutationFn: (payload) => client.post(`/courses/${courseId}/attendance`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance', courseId] });
+      invalidateRiskData(queryClient);
       setDate('');
       setError(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (recordId) => client.delete(`/courses/${courseId}/attendance/${recordId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance', courseId] });
+      invalidateRiskData(queryClient);
     },
   });
 
@@ -40,7 +51,8 @@ export default function AttendanceTab({ courseId }) {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="mb-4 flex flex-wrap items-end gap-2">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2">
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-700">Date</label>
           <input
@@ -69,7 +81,9 @@ export default function AttendanceTab({ courseId }) {
           Log
         </Button>
         {error && <p className="text-sm text-red-600">{error}</p>}
-      </form>
+        </form>
+        <CSVImportButton courseId={courseId} kind="attendance" />
+      </div>
 
       {records.length === 0 ? (
         <p className="text-sm text-slate-500">No attendance logged yet.</p>
@@ -79,6 +93,7 @@ export default function AttendanceTab({ courseId }) {
             <tr className="border-b border-slate-200 text-left text-slate-500">
               <th className="py-2">Date</th>
               <th>Status</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -86,6 +101,15 @@ export default function AttendanceTab({ courseId }) {
               <tr key={record._id} className="border-b border-slate-100">
                 <td className="py-2">{new Date(record.date).toLocaleDateString()}</td>
                 <td className="capitalize">{record.status}</td>
+                <td className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => deleteMutation.mutate(record._id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

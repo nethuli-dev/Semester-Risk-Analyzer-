@@ -112,9 +112,13 @@ Open **http://localhost:5173**. With the demo data, log in as `demo@semester-ris
 
 The demo seed builds four courses in different states (failing, two at-risk, on-track). Its risk history is produced by running the real risk engine at weekly checkpoints, not typed in. Running it again resets the demo student. Use a throwaway database if you don't want demo data next to real data.
 
+## Importing your own data
+
+Courses are created in the app; grades and attendance can be typed in or imported from CSV. Templates and a worked example are in [`sample-data/`](sample-data/README.md) (also downloadable from any course page). Imports check every row, accept any letter case for categories and statuses, reject categories that aren't in the course's grading scheme, and skip rows that were already imported.
+
 ## Demo walkthrough
 
-A good 3-minute path for a screen recording:
+A full step-by-step script for a screen recording is in [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md). The short version:
 
 1. **Home** — the "needs your attention first" card, then tap *Present* under "Class today?".
 2. **Dashboard** — donut, gauge, and the attendance-vs-grade scatter. Technical Writing is at-risk despite an 88% grade, because attendance is 50%.
@@ -131,7 +135,7 @@ cd backend
 npm test
 ```
 
-64 tests across 8 suites. They run serially against a **separate database** (`semester-risk-analyzer-test`) on the same cluster and drop it afterwards, so they never touch your dev data. Coverage: risk engine (hand-computed cases), pipeline validator (including malicious pipelines: missing user scoping, `$out`, unknown fields), an HTTP-level test where a mocked model emits `$out` / `$lookup` / unknown-field pipelines and the server rejects them without executing anything, model refusals, real-DB pipeline execution, risk-history de-duplication, auth flow, profile / password / session revocation, and course CRUD with a cross-user isolation test.
+74 tests across 9 suites. They run serially against a **separate database** (`semester-risk-analyzer-test`) on the same cluster and drop it afterwards, so they never touch your dev data. Coverage: risk engine (hand-computed cases), pipeline validator (including malicious pipelines: missing user scoping, `$out`, unknown fields), an HTTP-level test where a mocked model emits `$out` / `$lookup` / unknown-field pipelines and the server rejects them without executing anything, model refusals, real-DB pipeline execution, risk-history de-duplication, auth flow, profile / password / session revocation, and course CRUD with a cross-user isolation test.
 
 ## API overview
 
@@ -148,6 +152,8 @@ All routes except register / login / refresh require `Authorization: Bearer <acc
 | POST | `/api/courses/:id/grades/import` | CSV import with per-row results |
 | PUT / DELETE | `/api/grades/:id` | Update / delete a grade entry |
 | GET / POST | `/api/courses/:id/attendance` | List / log attendance (one record per day) |
+| POST | `/api/courses/:id/attendance/import` | CSV import with per-row results |
+| DELETE | `/api/courses/:id/attendance/:recordId` | Delete one attendance record |
 | GET | `/api/risk` | Fresh risk assessment for every course |
 | GET | `/api/risk/:courseId/history` | Risk score over time |
 | POST | `/api/query` | Ask a question in plain English |

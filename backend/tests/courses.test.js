@@ -133,9 +133,9 @@ describe('grade entry CRUD', () => {
   test('CSV import reports per-row success/failure instead of failing the whole batch', async () => {
     const csv = [
       'category,title,score,maxScore,date',
-      'Quiz,Quiz 1,9,10,2026-09-05',
-      'Quiz,Quiz 2,not-a-number,10,2026-09-12', // bad score
-      'Quiz,Quiz 3,7,10,2026-09-19',
+      'Assignments,Quiz 1,9,10,2026-09-05',
+      'Assignments,Quiz 2,not-a-number,10,2026-09-12', // bad score
+      'Assignments,Quiz 3,7,10,2026-09-19',
     ].join('\n');
 
     const res = await request(app)

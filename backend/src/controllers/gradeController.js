@@ -4,6 +4,7 @@ const GradeEntry = require('../models/GradeEntry');
 const AppError = require('../utils/AppError');
 const { findOwnedCourseOrFail } = require('./courseController');
 const { parseGradeCsv } = require('../services/csvImporter');
+const { requireCategory } = require('../utils/gradeCategory');
 
 const createGradeSchema = z
   .object({
@@ -40,8 +41,9 @@ async function listGrades(req, res, next) {
 
 async function createGrade(req, res, next) {
   try {
-    await findOwnedCourseOrFail(req.params.id, req.user.id);
-    const grade = await GradeEntry.create({ ...req.body, userId: req.user.id, courseId: req.params.id });
+    const course = await findOwnedCourseOrFail(req.params.id, req.user.id);
+    const category = requireCategory(course.gradingScheme, req.body.category);
+    const grade = await GradeEntry.create({ ...req.body, category, userId: req.user.id, courseId: req.params.id });
     res.status(201).json(grade);
   } catch (err) {
     next(err);
@@ -51,6 +53,10 @@ async function createGrade(req, res, next) {
 async function updateGrade(req, res, next) {
   try {
     const grade = await findOwnedGradeOrFail(req.params.id, req.user.id);
+    if (req.body.category !== undefined) {
+      const course = await findOwnedCourseOrFail(grade.courseId, req.user.id);
+      req.body.category = requireCategory(course.gradingScheme, req.body.category);
+    }
     Object.assign(grade, req.body);
     await grade.save();
     res.json(grade);
@@ -71,13 +77,14 @@ async function deleteGrade(req, res, next) {
 
 async function importGrades(req, res, next) {
   try {
-    await findOwnedCourseOrFail(req.params.id, req.user.id);
+    const course = await findOwnedCourseOrFail(req.params.id, req.user.id);
     if (!req.file) {
       return next(new AppError('CSV file is required (field name: file)', 400));
     }
     const result = await parseGradeCsv(req.file.buffer, {
       userId: req.user.id,
       courseId: req.params.id,
+      gradingScheme: course.gradingScheme,
     });
     // 207 Multi-Status: a partial success (some rows imported, some
     // rejected) is the expected/normal outcome here, not an error.

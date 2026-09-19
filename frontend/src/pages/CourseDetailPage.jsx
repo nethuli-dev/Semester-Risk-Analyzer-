@@ -49,7 +49,7 @@ export default function CourseDetailPage() {
         ))}
       </div>
 
-      {activeTab === 'Grades' ? <GradesTab courseId={id} /> : <AttendanceTab courseId={id} />}
+      {activeTab === 'Grades' ? <GradesTab courseId={id} categories={course.gradingScheme.map((item) => item.category)} /> : <AttendanceTab courseId={id} />}
     </div>
   );
 }

@@ -5,8 +5,9 @@ import GradeFormModal from './GradeFormModal';
 import CSVImportButton from './CSVImportButton';
 import Button from '../common/Button';
 import Spinner from '../common/Spinner';
+import { invalidateRiskData } from '../../utils/invalidate';
 
-export default function GradesTab({ courseId }) {
+export default function GradesTab({ courseId, categories = [] }) {
   const queryClient = useQueryClient();
   const [modalState, setModalState] = useState(null);
 
@@ -15,7 +16,10 @@ export default function GradesTab({ courseId }) {
     queryFn: async () => (await client.get(`/courses/${courseId}/grades`)).data,
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['grades', courseId] });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['grades', courseId] });
+    invalidateRiskData(queryClient);
+  };
 
   const createMutation = useMutation({
     mutationFn: (payload) => client.post(`/courses/${courseId}/grades`, payload),
@@ -42,9 +46,9 @@ export default function GradesTab({ courseId }) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-start justify-between gap-3">
         <Button onClick={() => setModalState('create')}>+ Add grade entry</Button>
-        <CSVImportButton courseId={courseId} />
+        <CSVImportButton courseId={courseId} kind="grades" />
       </div>
 
       {grades.length === 0 ? (
@@ -93,6 +97,7 @@ export default function GradesTab({ courseId }) {
 
       {modalState === 'create' && (
         <GradeFormModal
+          categories={categories}
           isSubmitting={createMutation.isPending}
           onSubmit={(payload) => createMutation.mutateAsync(payload)}
           onClose={() => setModalState(null)}
@@ -101,6 +106,7 @@ export default function GradesTab({ courseId }) {
 
       {modalState && modalState !== 'create' && (
         <GradeFormModal
+          categories={categories}
           initialGrade={modalState}
           isSubmitting={updateMutation.isPending}
           onSubmit={(payload) => updateMutation.mutateAsync({ id: modalState._id, payload })}

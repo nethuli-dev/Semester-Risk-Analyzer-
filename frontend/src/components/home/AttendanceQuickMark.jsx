@@ -1,6 +1,7 @@
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import client from '../../api/client';
 import { localToday } from '../../utils/dates';
+import { invalidateRiskData } from '../../utils/invalidate';
 
 const OPTIONS = [
   { status: 'present', label: 'Present', hover: 'hover:border-emerald-600 hover:bg-emerald-600' },
@@ -15,7 +16,7 @@ function CourseRow({ course, todayRecord, isLoading }) {
     onSettled: () => {
       // Also runs on 409 (already logged from another tab): refetch shows the truth.
       queryClient.invalidateQueries({ queryKey: ['attendance', course._id] });
-      queryClient.invalidateQueries({ queryKey: ['risk'] });
+      invalidateRiskData(queryClient);
     },
   });
 
@@ -24,8 +25,8 @@ function CourseRow({ course, todayRecord, isLoading }) {
       <p className="truncate text-sm font-medium text-slate-900">{course.courseName}</p>
       {todayRecord ? (
         <p className="mt-1 text-xs text-slate-600">
-          Logged today as <span className="font-medium capitalize">{todayRecord.status}</span>. To change it, edit the
-          record in the course's attendance tab.
+          Logged today as <span className="font-medium capitalize">{todayRecord.status}</span>. To change it, delete the
+          record in the course's Attendance tab and log it again.
         </p>
       ) : (
         <div className="mt-2 flex gap-2" role="group" aria-label={`Mark ${course.courseName} attendance for today`}>

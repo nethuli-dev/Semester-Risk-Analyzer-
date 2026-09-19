@@ -2,8 +2,8 @@ import { useState } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 
-export default function GradeFormModal({ initialGrade, onSubmit, onClose, isSubmitting }) {
-  const [category, setCategory] = useState(initialGrade?.category ?? '');
+export default function GradeFormModal({ initialGrade, categories = [], onSubmit, onClose, isSubmitting }) {
+  const [category, setCategory] = useState(initialGrade?.category ?? categories[0] ?? '');
   const [title, setTitle] = useState(initialGrade?.title ?? '');
   const [score, setScore] = useState(initialGrade?.score ?? '');
   const [maxScore, setMaxScore] = useState(initialGrade?.maxScore ?? '');
@@ -25,13 +25,19 @@ export default function GradeFormModal({ initialGrade, onSubmit, onClose, isSubm
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Category</label>
-          <input
+          <select
             required
-            placeholder="e.g. Midterm"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
+          >
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-slate-500">From this course's grading scheme, so the grade always counts toward your risk score.</p>
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Title</label>
