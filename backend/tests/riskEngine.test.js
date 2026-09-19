@@ -157,4 +157,22 @@ describe('riskEngine.assessCourseRisk (hand-computed cases)', () => {
     expect(Math.round(scoredSum * 100) / 100).toBe(result.riskScore);
     expect(result.factors.find((f) => f.name === 'Below target grade').informational).toBe(true);
   });
+
+  test('categoryBreakdown lists every scheme category with its weight; ungraded ones are null', () => {
+    const result = assessCourseRisk({
+      gradingScheme: [
+        { category: 'Homework', weight: 30 },
+        { category: 'Final', weight: 70 },
+      ],
+      gradeEntries: [
+        { category: 'Homework', score: 80, maxScore: 100 },
+        { category: 'Homework', score: 90, maxScore: 100 },
+      ],
+      attendanceRecords: [],
+    });
+    expect(result.categoryBreakdown).toEqual([
+      { category: 'Homework', weight: 30, averagePercent: 85 },
+      { category: 'Final', weight: 70, averagePercent: null },
+    ]);
+  });
 });

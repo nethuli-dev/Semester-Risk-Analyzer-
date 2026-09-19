@@ -10,8 +10,13 @@ import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import AskAIPage from './pages/AskAIPage';
 import ReportsPage from './pages/ReportsPage';
+import HomePage from './pages/HomePage';
+import ProfilePage from './pages/ProfilePage';
 
-const queryClient = new QueryClient();
+// 30s staleTime: Home, Dashboard and Reports all read /risk, and every /risk
+// call appends a RiskAssessment row. Sharing a short-lived cache stops page
+// hopping from flooding the trend chart with duplicate points.
+const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 30_000 } } });
 
 export default function App() {
   return (
@@ -29,14 +34,16 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
+              <Route path="/home" element={<HomePage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/ask" element={<AskAIPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

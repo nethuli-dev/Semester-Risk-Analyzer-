@@ -29,6 +29,22 @@ const loginSchema = z
   })
   .strict();
 
+const updateProfileSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100).optional(),
+    university: z.string().trim().max(150).optional(),
+    program: z.string().trim().max(150).optional(),
+  })
+  .strict()
+  .refine((body) => Object.keys(body).length > 0, { message: 'Provide at least one field to update' });
+
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(200),
+    newPassword: z.string().min(8).max(200),
+  })
+  .strict();
+
 const REFRESH_COOKIE_NAME = 'refreshToken';
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -168,10 +184,97 @@ async function me(req, res, next) {
     if (!user) {
       return next(new AppError('User not found', 404));
     }
-    res.json({ user: { id: user._id, name: user.name, email: user.email } });
+    res.json({ user: publicUser(user) });
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { register, login, refresh, logout, me, registerSchema, loginSchema };
+// The one place that decides which User fields ever leave the server.
+function publicUser(user) {
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    university: user.university ?? '',
+    program: user.program ?? '',
+    createdAt: user.createdAt,
+  };
+}
+
+// Email is deliberately NOT editable here: it's the login identifier, and
+// changing it safely needs re-verification we haven't built. The schema is
+// .strict(), so a body containing email/userId/passwordHash is rejected
+// outright rather than silently ignored.
+async function updateProfile(req, res, next) {
+  try {
+    const user = await User.findByIdAndUpdate(req.user.id, { $set: req.body }, { new: true, runValidators: true });
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+    res.json({ user: publicUser(user) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Re-verifies the current password (a stolen access token alone must not be
+// enough to take over an account), then revokes EVERY refresh token — so a
+// session an attacker may hold on another device dies — and issues a fresh
+// pair so the student who just changed it stays logged in here. Access
+// tokens already issued stay valid until they expire (<=15 min); that's the
+// accepted trade-off of stateless JWT access tokens.
+async function changePassword(req, res, next) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user.id).select('+passwordHash');
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+
+    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!matches) {
+      return next(new AppError('Current password is incorrect', 401));
+    }
+    if (currentPassword === newPassword) {
+      return next(new AppError('New password must be different from the current one', 400));
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST_FACTOR);
+    await user.save();
+
+    await RefreshToken.updateMany({ userId: user._id, revoked: false }, { revoked: true });
+    const { accessToken, refreshToken } = await issueTokenPair(user._id);
+    res.cookie(REFRESH_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
+    res.json({ accessToken });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function logoutAll(req, res, next) {
+  try {
+    await RefreshToken.updateMany({ userId: req.user.id, revoked: false }, { revoked: true });
+    const { maxAge, ...clearCookieOptions } = REFRESH_COOKIE_OPTIONS;
+    res.clearCookie(REFRESH_COOKIE_NAME, clearCookieOptions);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  register,
+  login,
+  refresh,
+  logout,
+  logoutAll,
+  me,
+  updateProfile,
+  changePassword,
+  registerSchema,
+  loginSchema,
+  updateProfileSchema,
+  changePasswordSchema,
+};

@@ -64,8 +64,34 @@ export function AuthProvider({ children }) {
     }
   }, [applyToken]);
 
+  const updateProfile = useCallback(async (fields) => {
+    const { data } = await client.patch('/auth/me', fields);
+    setUser(data.user);
+  }, []);
+
+  // The server revokes every refresh token and issues a new pair, so this
+  // session keeps working while any other device is signed out.
+  const changePassword = useCallback(
+    async (currentPassword, newPassword) => {
+      const { data } = await client.post('/auth/change-password', { currentPassword, newPassword });
+      applyToken(data.accessToken);
+    },
+    [applyToken]
+  );
+
+  const logoutEverywhere = useCallback(async () => {
+    try {
+      await client.post('/auth/logout-all');
+    } finally {
+      applyToken(null);
+      setUser(null);
+    }
+  }, [applyToken]);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, login, register, logout, updateProfile, changePassword, logoutEverywhere }}
+    >
       {children}
     </AuthContext.Provider>
   );

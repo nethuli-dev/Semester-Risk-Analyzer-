@@ -118,6 +118,18 @@ function computeFactors(trajectoryGrade, attendanceRate, targetGrade) {
   return factors;
 }
 
+// Per-category view for the report UI: how the student is doing in each
+// graded category, next to how much that category is worth. Computed here
+// (not in the browser) so every number a student sees comes from this file.
+function computeCategoryBreakdown(gradingScheme, gradeEntries) {
+  const averages = averagePercentByCategory(gradeEntries);
+  return gradingScheme.map(({ category, weight }) => ({
+    category,
+    weight,
+    averagePercent: averages.has(category) ? Math.round(averages.get(category) * 100) / 100 : null,
+  }));
+}
+
 function computeRecommendation(riskLevel, trajectoryGrade, attendanceRate) {
   if (trajectoryGrade === null) {
     return 'Log some grades to get a risk assessment for this course.';
@@ -151,6 +163,7 @@ function assessCourseRisk({ gradingScheme, gradeEntries, attendanceRecords, targ
     factors,
     recommendation,
     trajectoryGrade: trajectoryGrade === null ? null : Math.round(trajectoryGrade * 100) / 100,
+    categoryBreakdown: computeCategoryBreakdown(gradingScheme, gradeEntries),
     attendanceRate: attendanceRate === null ? null : Math.round(attendanceRate * 100) / 100,
   };
 }
@@ -162,5 +175,6 @@ module.exports = {
   computeRiskLevel,
   computeRiskScore,
   computeFactors,
+  computeCategoryBreakdown,
   computeRecommendation,
 };

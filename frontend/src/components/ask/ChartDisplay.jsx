@@ -1,6 +1,6 @@
 import {
   BarChart, Bar, LineChart, Line, ScatterChart, Scatter, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { CATEGORICAL_COLORS, colorForIndex } from '../../theme/categoricalColors';
 
@@ -21,8 +21,9 @@ function formatLabel(value) {
   return String(value);
 }
 
-export default function ChartDisplay({ chartConfig }) {
-  const { type, data } = chartConfig ?? {};
+export default function ChartDisplay({ chartConfig, typeOverride }) {
+  const { data } = chartConfig ?? {};
+  const type = typeOverride ?? chartConfig?.type;
 
   if (!type || type === 'none' || !Array.isArray(data) || data.length === 0) {
     return null;
@@ -30,10 +31,17 @@ export default function ChartDisplay({ chartConfig }) {
 
   const { labelKey, valueKey } = pickAxes(data[0]);
   const chartData = data.map((row) => ({ ...row, __label: formatLabel(row[labelKey]) }));
+  const wrap = (chart) => (
+    <div className="h-[260px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        {chart}
+      </ResponsiveContainer>
+    </div>
+  );
 
   if (type === 'bar') {
-    return (
-      <BarChart width={480} height={260} data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+    return wrap(
+      <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
         <CartesianGrid stroke="#e1e0d9" strokeDasharray="3 3" />
         <XAxis dataKey="__label" tick={{ fill: '#898781', fontSize: 12 }} />
         <YAxis tick={{ fill: '#898781', fontSize: 12 }} />
@@ -44,8 +52,8 @@ export default function ChartDisplay({ chartConfig }) {
   }
 
   if (type === 'line') {
-    return (
-      <LineChart width={480} height={260} data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+    return wrap(
+      <LineChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
         <CartesianGrid stroke="#e1e0d9" strokeDasharray="3 3" />
         <XAxis dataKey="__label" tick={{ fill: '#898781', fontSize: 12 }} />
         <YAxis tick={{ fill: '#898781', fontSize: 12 }} />
@@ -59,8 +67,8 @@ export default function ChartDisplay({ chartConfig }) {
     const numericKeys = Object.keys(data[0]).filter((k) => typeof data[0][k] === 'number');
     if (numericKeys.length < 2) return null;
     const [xKey, yKey] = numericKeys;
-    return (
-      <ScatterChart width={480} height={260} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+    return wrap(
+      <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
         <CartesianGrid stroke="#e1e0d9" strokeDasharray="3 3" />
         <XAxis type="number" dataKey={xKey} name={xKey} tick={{ fill: '#898781', fontSize: 12 }} />
         <YAxis type="number" dataKey={yKey} name={yKey} tick={{ fill: '#898781', fontSize: 12 }} />
@@ -71,8 +79,8 @@ export default function ChartDisplay({ chartConfig }) {
   }
 
   if (type === 'donut') {
-    return (
-      <PieChart width={320} height={260}>
+    return wrap(
+      <PieChart>
         <Pie data={chartData} dataKey={valueKey} nameKey="__label" innerRadius={50} outerRadius={90} paddingAngle={2}>
           {chartData.map((_, index) => (
             <Cell key={index} fill={colorForIndex(index)} />

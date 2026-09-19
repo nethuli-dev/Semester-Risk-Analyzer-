@@ -1,32 +1,20 @@
 import { NavLink } from 'react-router-dom';
 
-// Profile isn't built yet (no phase currently calls for it) — shown as a
-// disabled entry so the nav shell matches the app's final information
-// architecture without implying functionality that doesn't exist.
 const NAV_ITEMS = [
+  { to: '/home', label: 'Home', icon: '🏠' },
   { to: '/dashboard', label: 'Dashboard', icon: '📊' },
   { to: '/courses', label: 'Courses', icon: '📚' },
   { to: '/ask', label: 'Ask AI', icon: '💬' },
   { to: '/reports', label: 'Reports', icon: '📄' },
-  { label: 'Profile', icon: '👤', disabled: true },
+  { to: '/profile', label: 'Profile', icon: '👤' },
 ];
 
 export default function Sidebar() {
   return (
-    <aside className="flex h-full w-56 flex-col bg-slate-900 text-slate-200">
+    <aside className="no-print flex h-full w-56 flex-col bg-slate-900 text-slate-200">
       <div className="px-5 py-5 text-lg font-semibold text-white">Semester Risk Analyzer</div>
       <nav className="flex-1 space-y-1 px-3">
-        {NAV_ITEMS.map((item) =>
-          item.disabled ? (
-            <div
-              key={item.label}
-              className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-500"
-              title="Coming soon"
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </div>
-          ) : (
+        {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -39,8 +27,7 @@ export default function Sidebar() {
               <span>{item.icon}</span>
               <span>{item.label}</span>
             </NavLink>
-          )
-        )}
+        ))}
       </nav>
     </aside>
   );

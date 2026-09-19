@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+@theme {
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -8,4 +12,22 @@
 body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* "Download PDF" uses the browser's Save-as-PDF: hide the app chrome, let
+   the report flow across pages, and keep cards from splitting mid-page. */
+@media print {
+  .no-print { display: none !important; }
+  .app-shell { display: block !important; height: auto !important; background: #fff !important; }
+  .app-scroll { overflow: visible !important; height: auto !important; padding: 0 !important; }
+  .print-avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  .print-page { max-width: none !important; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
