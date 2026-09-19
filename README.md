@@ -6,6 +6,8 @@ A full-stack web app that helps students see which courses are slipping **before
 
 ## Screenshots
 
+![Sign in](docs/screenshots/login.png)
+
 | | |
 | --- | --- |
 | ![Home](docs/screenshots/home.png) | ![Dashboard](docs/screenshots/dashboard.png) |

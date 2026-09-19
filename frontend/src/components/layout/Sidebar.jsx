@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { BRAND } from '../../config/brand';
 
 const NAV_ITEMS = [
   { to: '/home', label: 'Home', icon: '🏠' },
@@ -22,7 +23,7 @@ export default function Sidebar({ open, onClose }) {
         aria-label="Main navigation"
       >
         <div className="flex items-start justify-between px-5 py-5">
-          <span className="font-display text-lg font-bold leading-tight text-white">Semester Risk Analyzer</span>
+          <span className="font-display text-lg font-bold leading-tight text-white">{BRAND.name}</span>
           <button type="button" onClick={onClose} aria-label="Close menu" className="ml-2 text-slate-400 hover:text-white lg:hidden">
             ✕
           </button>

@@ -18,7 +18,7 @@ You play a student who has just signed up. Everything you show is real: nothing 
 Say: *"Students usually find out a course is going badly after the final. Semester Risk Analyzer shows it while there's still time. You log grades and attendance, it scores the risk per course, answers questions in plain English, and writes a report you can take to an advisor. The interesting part is that an AI can query the database safely."*
 
 ### 2. Create your account (30 s)
-- Open the app, click **Register**, fill in your name, email and password, submit.
+- Open the app and click the **Create account** tab (top of the card). Fill in your name, email and password, and submit. Use *Show* to reveal the password while typing if you want the viewer to see it's a normal field.
 - You land on **Home** with nothing tracked yet. Point at the "Start with one course" card.
 - Say: *"Passwords are hashed with bcrypt. My session is a short-lived token in memory plus a refresh cookie the browser can't read from JavaScript."*
 
