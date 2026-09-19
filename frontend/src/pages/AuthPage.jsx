@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandMark from '../components/auth/BrandMark';
-import HeroPreview from '../components/auth/HeroPreview';
 
 const FEATURES = ['Risk scores', 'Ask in plain English', 'Advisor-ready reports'];
 
@@ -59,11 +58,21 @@ export default function AuthPage({ mode }) {
 
   return (
     <div className="grid min-h-screen bg-[#f2f5f9] lg:grid-cols-[1.1fr_1fr]">
-      <section className="relative isolate flex flex-col justify-between gap-10 overflow-hidden bg-slate-950 px-6 py-8 sm:px-10 lg:min-h-screen lg:px-14 lg:py-12">
+      <section className="relative isolate flex min-h-[30rem] flex-col justify-between gap-16 overflow-hidden bg-slate-950 px-6 py-8 sm:px-10 lg:min-h-screen lg:px-14 lg:py-12">
+        <img
+          src="/images/login-hero.jpg"
+          alt=""
+          aria-hidden
+          fetchPriority="high"
+          className="absolute inset-0 -z-20 h-full w-full object-cover object-[50%_72%]"
+        />
+        {/* Darkens the photo where the text sits, so the headline stays readable. */}
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 bg-[radial-gradient(60rem_40rem_at_10%_-10%,rgba(99,102,241,0.55),transparent),radial-gradient(40rem_30rem_at_100%_110%,rgba(16,185,129,0.22),transparent)]"
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/95 via-slate-950/55 to-slate-950/35"
         />
+        {/* Quiets the busy wall behind the logo. */}
+        <div aria-hidden className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-slate-950/80 to-transparent" />
         <BrandMark />
 
         <div className="max-w-xl">
@@ -71,21 +80,16 @@ export default function AuthPage({ mode }) {
           <h1 className="font-display text-4xl leading-[1.05] font-bold tracking-tight text-white sm:text-5xl xl:text-6xl">
             Know where you stand before the final.
           </h1>
-          <p className="mt-4 max-w-md text-base leading-relaxed text-slate-300">
+          <p className="mt-4 max-w-md text-base leading-relaxed text-slate-200">
             Log grades and attendance. See which courses are slipping while there is still time to fix them.
           </p>
           <ul className="mt-6 flex flex-wrap gap-2">
             {FEATURES.map((f) => (
-              <li key={f} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90">
+              <li key={f} className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
                 {f}
               </li>
             ))}
           </ul>
-        </div>
-
-        {/* Shown only when the window is tall enough to show the card whole. */}
-        <div className="hidden [@media(min-width:1024px)_and_(min-height:840px)]:block">
-          <HeroPreview />
         </div>
       </section>
 
