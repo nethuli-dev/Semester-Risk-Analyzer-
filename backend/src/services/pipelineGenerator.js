@@ -24,8 +24,12 @@ const RESPONSE_SCHEMA = {
       type: 'string',
       description: 'A JSON-encoded array of MongoDB aggregation pipeline stages, e.g. "[{\\"$match\\":{\\"category\\":\\"Midterm\\"}}]"',
     },
+    refusal: {
+      type: 'string',
+      description: 'Empty string if the question can be answered. Otherwise one plain-English sentence explaining why it cannot.',
+    },
   },
-  required: ['collection', 'pipeline'],
+  required: ['collection', 'pipeline', 'refusal'],
 };
 
 function describeSchema() {
@@ -68,6 +72,7 @@ Rules:
 - Never use $out, $merge, $function, $accumulator, $where, $lookup, or any stage/operator not in that list.
 - Only reference fields that exist in the target collection's schema below. Do not invent fields.
 - A pipeline stage is never an empty object — every stage does something.
+- This tool is strictly READ-ONLY and only answers questions about the signed-in student's OWN grades, attendance, courses and risk. If the question asks to change, delete, copy, export or create data; to see any other person's data or a specific user id; to use other collections (users, passwords, system data); or to run database commands, do NOT try to answer it: set "refusal" to one plain sentence saying why, set "pipeline" to "[]", and pick any collection. For every answerable question, "refusal" must be an empty string.
 - Respond with only the JSON object the response schema describes — no prose, no markdown.
 
 Collections and their fields (userId is handled automatically — never reference it):
@@ -124,7 +129,7 @@ async function generatePipeline({ question, feedback, courseName }) {
     throw new Error(`Gemini's pipeline field was not valid JSON: ${err.message}`);
   }
 
-  return { collection: outer.collection, pipeline };
+  return { collection: outer.collection, pipeline, refusal: (outer.refusal ?? '').trim() };
 }
 
 const SUMMARY_RESPONSE_SCHEMA = {
@@ -151,6 +156,8 @@ async function summarizeResult({ question, result }) {
 Rules:
 - Answer directly in 2-4 sentences, citing the actual numbers in the result.
 - If the result is empty, say so plainly — do not guess or make up data.
+- The query was READ-ONLY and only ever touches this student's own data. It cannot delete, change, create, copy or export anything. NEVER say or imply that data was deleted, removed, changed, copied or exported. If the question asked for such an action, say plainly that this tool can only read data and nothing was changed, then state only what the result actually shows.
+- Never describe the result as belonging to another user or another student.
 - Also choose the best chart type for this result: "bar", "line", "scatter", "donut", or "none" if a chart wouldn't add value (e.g. the result is a single number).
 - Respond with only the JSON object the response schema describes — no prose, no markdown.`,
       responseMimeType: 'application/json',

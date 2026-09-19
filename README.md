@@ -4,10 +4,28 @@ A full-stack web app that helps students see which courses are slipping **before
 
 > Built as a portfolio project. The interesting parts are the **authentication flow**, the **per-user data isolation**, and the **pipeline validator** that makes it safe to run LLM-generated database queries.
 
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Home](docs/screenshots/home.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+| **Home:** what needs attention first, and one-tap attendance | **Dashboard:** risk overview and attendance vs. grades |
+| ![Ask AI answer](docs/screenshots/ask-ai-answer.png) | ![Ask AI refusing](docs/screenshots/ask-ai-refused.png) |
+| **Ask AI:** plain-English questions, with Data and Pipeline tabs | **Ask AI:** a destructive request is refused with a reason |
+
+![Reports](docs/screenshots/reports.png)
+
+The layout is fully responsive:
+
+| | |
+| --- | --- |
+| ![Mobile home](docs/screenshots/mobile-home.png) | ![Mobile menu](docs/screenshots/mobile-menu.png) |
+
 ## Features
 
 | Area | What it does |
 | --- | --- |
+| **Search** | Top-bar search jumps to pages and your courses, or turns any text into an Ask AI question. |
 | **Home** | A "needs your attention first" card, one-tap attendance for today, and each course's standing against your target grade. |
 | **Dashboard** | Semester overview donut, highest-risk gauge, best/at-risk course lists, attendance-vs-grade scatter. |
 | **Courses** | Course CRUD with a weighted grading scheme (validated to be sensible server-side), grade entry, attendance log, partial-success CSV import. |
@@ -41,7 +59,23 @@ Worked example: grades averaging 50% and 2 of 6 classes attended → `50 + 0.5 �
   - the only execution path is a read-only `.aggregate()` call.
 
   The Pipeline tab in Ask AI shows this forced first stage.
+- **Refusals and honest summaries:** the model is told to refuse anything that isn't a read-only question about your own data (deleting, copying, other users, other collections), and the app returns a visible reason. That refusal is a UX layer and is not what keeps you safe; the validator is. The answer-writing step is also told the query was read-only, so it can never claim data was deleted or changed (an early version did, which is why this rule exists).
 - **Reports** are narrated by the LLM from numbers the risk engine already computed; the prompt forbids inventing or recalculating figures.
+
+To see the validator reject hostile pipelines without any LLM involved:
+
+```bash
+npm run demo:validator
+```
+
+Abridged output:
+
+```
+Steals via $out         -> REJECTED. Stage 1 uses disallowed stage "$out"
+Joins to users          -> REJECTED. Stage 0 uses disallowed stage "$lookup"
+Reads passwordHash      -> REJECTED. Stage 0 ($match): Unknown field "passwordHash"
+Targets another user    -> ACCEPTED, and the server made stage 0 {"$match":{"userId":"the-signed-in-student"}}
+```
 
 ## Tech stack
 
@@ -58,18 +92,16 @@ Worked example: grades averaging 50% and 2 of 6 classes attended → `50 + 0.5 �
 ```bash
 git clone https://github.com/nethuli-dev/Semester-Risk-Analyzer-.git
 cd Semester-Risk-Analyzer-
+npm run install:all                 # installs backend and frontend dependencies
+cp backend/.env.example backend/.env    # then fill in the values below
+cp frontend/.env.example frontend/.env  # VITE_API_URL=http://localhost:5050/api
+npm run seed:demo                   # optional: a demo student with 8 weeks of data
+npm run dev                         # API on :5050, web app on :5173
 ```
 
-**Backend**
+Open **http://localhost:5173**. With the demo data, log in as `demo@semester-risk.dev` / `DemoPass123!`, or register your own account.
 
-```bash
-cd backend
-cp .env.example .env      # then fill in the values below
-npm install
-npm run dev               # http://localhost:5050
-```
-
-| Variable | Purpose |
+| Variable (`backend/.env`) | Purpose |
 | --- | --- |
 | `MONGODB_URI` | MongoDB connection string |
 | `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | Two different long random strings (e.g. `openssl rand -hex 48`) |
@@ -78,16 +110,19 @@ npm run dev               # http://localhost:5050
 | `FRONTEND_ORIGIN` | CORS origin, default `http://localhost:5173` |
 | `PORT` | Default `5050` (not 5000, which macOS AirPlay Receiver uses) |
 
-**Frontend**
+The demo seed builds four courses in different states (failing, two at-risk, on-track). Its risk history is produced by running the real risk engine at weekly checkpoints, not typed in. Running it again resets the demo student. Use a throwaway database if you don't want demo data next to real data.
 
-```bash
-cd frontend
-cp .env.example .env      # VITE_API_URL=http://localhost:5050/api
-npm install
-npm run dev               # http://localhost:5173
-```
+## Demo walkthrough
 
-Register an account on the login screen, add a course, log a few grades, and open Home.
+A good 3-minute path for a screen recording:
+
+1. **Home** — the "needs your attention first" card, then tap *Present* under "Class today?".
+2. **Dashboard** — donut, gauge, and the attendance-vs-grade scatter. Technical Writing is at-risk despite an 88% grade, because attendance is 50%.
+3. **Courses → Calculus II** — grades and attendance, CSV import.
+4. **Ask AI** — tap *Which course has my lowest average score?*, then open the **Pipeline** tab and point at the server-added stage 0.
+5. **Ask AI** — type `Delete all of my grades` and show the refusal, then run `npm run demo:validator` in a terminal.
+6. **Reports** — generate the summary, expand a course to show the trend, then *Download PDF*.
+7. **Profile** — change password, then sign out everywhere.
 
 ## Running the tests
 
@@ -96,7 +131,7 @@ cd backend
 npm test
 ```
 
-Tests run serially against a **separate database** (`semester-risk-analyzer-test`) on the same cluster and drop it afterwards, so they never touch your dev data. Coverage: risk engine (hand-computed cases), pipeline validator (including malicious pipelines: missing user scoping, `$out`, unknown fields), real-DB pipeline execution, auth flow, profile / password / session revocation, and course CRUD with a cross-user isolation test.
+64 tests across 8 suites. They run serially against a **separate database** (`semester-risk-analyzer-test`) on the same cluster and drop it afterwards, so they never touch your dev data. Coverage: risk engine (hand-computed cases), pipeline validator (including malicious pipelines: missing user scoping, `$out`, unknown fields), an HTTP-level test where a mocked model emits `$out` / `$lookup` / unknown-field pipelines and the server rejects them without executing anything, model refusals, real-DB pipeline execution, risk-history de-duplication, auth flow, profile / password / session revocation, and course CRUD with a cross-user isolation test.
 
 ## API overview
 
@@ -118,12 +153,15 @@ All routes except register / login / refresh require `Authorization: Bearer <acc
 | POST | `/api/query` | Ask a question in plain English |
 | GET | `/api/queries` | Question history |
 | POST | `/api/reports/generate` | Generate or regenerate a term report |
-| GET | `/api/reports/:term` | Fetch a stored report |
+| GET | `/api/reports/:term` | Fetch a stored report (`204` if none yet) |
 
 ## Project structure
 
 ```
+scripts/           dev.js: starts API and web app together
+docs/screenshots/  images used in this README
 backend/
+  scripts/         seedDemo.js, demoValidator.js
   src/
     config/        constants (every threshold is a named constant), db
     controllers/   auth, courses, grades, attendance, risk, query, report
@@ -143,12 +181,12 @@ PROJECT_PLAN.md    architecture, schema, API design
 
 ## Known limitations
 
-- **Not deployed yet.** The testing / polish / deployment phase is still open.
-- **No automated frontend tests.** The frontend has been checked with production builds and manual use only.
+- **Runs locally by design.** There is no hosted deployment; the project is demonstrated with a screen recording. If you deploy the frontend and API on different domains, note that the refresh cookie is `SameSite=Strict` and would need a same-origin proxy (or `SameSite=None; Secure`).
+- **No automated frontend tests.** The UI has been checked with production builds and a scripted headless-browser pass (desktop and phone widths, console errors) rather than a test suite.
 - **Download PDF** uses the browser's Save-as-PDF (print layout) rather than generating a file directly.
-- Ask AI answers one collection at a time (no joins), so the LLM can't relate two collections in a single question.
+- Ask AI answers one collection at a time (no joins), so a single question can't relate two collections.
+- The model's refusal of harmful questions is best-effort. The validator, not the model, is what guarantees safety.
 - Access tokens already issued stay valid until they expire (≤ 15 min) after a password change or revoke, the usual trade-off of stateless JWTs.
-- Each `GET /api/risk` stores a new risk point for the trend chart, so heavy page-hopping adds near-duplicate points.
 
 ## Documentation
 

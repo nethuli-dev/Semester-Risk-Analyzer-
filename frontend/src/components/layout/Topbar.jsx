@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import SearchBox from './SearchBox';
 
-export default function Topbar() {
+export default function Topbar({ onMenuClick }) {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -27,12 +28,18 @@ export default function Topbar() {
   }, [menuOpen]);
 
   return (
-    <header className="no-print flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
-      <input
-        type="search"
-        placeholder="Search..."
-        className="w-64 rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
-      />
+    <header className="no-print flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 md:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label="Open menu"
+          className="rounded-md border border-slate-300 px-2.5 py-1.5 text-slate-700 hover:bg-slate-50 lg:hidden"
+        >
+          ☰
+        </button>
+        <SearchBox />
+      </div>
       <div className="relative" ref={menuRef}>
         <button
           type="button"

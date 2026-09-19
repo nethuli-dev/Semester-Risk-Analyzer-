@@ -68,8 +68,10 @@ async function generateReportForTerm(req, res, next) {
 async function getReport(req, res, next) {
   try {
     const report = await Report.findOne({ userId: req.user.id, term: req.params.term });
+    // "No report yet" is a normal state, not an error: 204 keeps the browser
+    // console clean where a 404 would log a red failed-request line.
     if (!report) {
-      return next(new AppError(`No report generated yet for term "${req.params.term}"`, 404));
+      return res.status(204).send();
     }
     res.json(report);
   } catch (err) {

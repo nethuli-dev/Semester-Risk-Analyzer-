@@ -5,7 +5,11 @@ import MeterBar from './MeterBar';
 
 function TrendChart({ history }) {
   // The API returns newest first; the chart reads left to right.
+  // A course with no grades yet is stored with score 0 ("not enough data").
+  // Plotting that would read as "zero risk", so the trend starts at the first
+  // real assessment.
   const points = [...(history ?? [])]
+    .filter((h) => !h.factors.some((f) => f.name === 'Not enough data yet'))
     .sort((a, b) => new Date(a.computedAt) - new Date(b.computedAt))
     .slice(-30)
     .map((h) => ({

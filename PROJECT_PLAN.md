@@ -306,6 +306,8 @@ semester-risk-analyzer/
 
 ## 13. Deployment Plan
 
+> **Decision (2026-09-19):** deployment was intentionally skipped. The project is demonstrated locally and with a screen recording, so the table below is kept as the original plan only.
+
 | Piece | Where | Notes |
 |---|---|---|
 | Database | MongoDB Atlas (free M0 cluster) | Whitelist Render's outbound IP or `0.0.0.0/0` for simplicity in a portfolio project (note this tradeoff in README). |

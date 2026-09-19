@@ -1,0 +1,15 @@
+{
+  "name": "semester-risk-analyzer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full-stack semester risk analyzer: risk scoring, dashboard, safe natural-language queries, AI reports.",
+  "license": "MIT",
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "dev": "node scripts/dev.js",
+    "test": "npm --prefix backend test",
+    "seed:demo": "npm --prefix backend run seed:demo",
+    "demo:validator": "npm --prefix backend run demo:validator",
+    "build": "npm --prefix frontend run build"
+  }
+}

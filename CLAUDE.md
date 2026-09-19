@@ -261,3 +261,12 @@ sign-out-everywhere.
 
 Still open: Phase 6 (testing/polish/deploy, §9 checklist), frontend not yet checked in a browser by
 the assistant (Chrome extension unavailable), no frontend automated tests.
+
+### Phase 6 outcome (2026-09-19)
+Deployment dropped by the user (demo video instead). Done: one-command start (`npm run dev` at
+the repo root), `npm run seed:demo`, responsive layout with a mobile drawer, working top-bar
+search, risk history stored only on change, Ask AI refusal path + read-only-aware summarizer
+(an early summarizer claimed grades had been deleted; fixed and covered by tests), HTTP-level
+rejection tests, `npm run demo:validator`. `npm test` → 64/64 across 8 suites. A scripted
+headless-Chrome pass over every page at desktop and 390px width showed no horizontal overflow and
+no console errors (the only console line is the intentional 422 when a question is refused).

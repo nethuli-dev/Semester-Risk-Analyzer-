@@ -36,6 +36,13 @@ async function generateAndValidate({ question, feedback, courseName, userId, cou
   } catch (err) {
     return { attempt: null, validation: { valid: false, reason: `Pipeline generation failed: ${err.message}` } };
   }
+  // A refusal is the model saying "this isn't a read-only question about your
+  // own data". It's a UX nicety, NOT the security boundary — the validator
+  // below still checks and force-scopes everything that does get through.
+  if (attempt.refusal) {
+    return { attempt, validation: { valid: false, refused: true, reason: attempt.refusal } };
+  }
+
   // .aggregate() does NOT auto-cast strings to ObjectId the way find() does,
   // so a forced {$match: {userId: "<string>"}} silently matches nothing.
   // Cast here, once, on the way into the validator's forced $match.
@@ -87,7 +94,7 @@ async function askQuestion(req, res, next) {
     });
     let attemptsUsed = 1;
 
-    if (!validation.valid) {
+    if (!validation.valid && !validation.refused) {
       for (let i = 0; i < QUERY_MAX_RETRIES; i += 1) {
         ({ attempt, validation } = await generateAndValidate({
           question,
@@ -111,7 +118,12 @@ async function askQuestion(req, res, next) {
         rejectionReason: validation.reason,
       });
       return next(
-        new AppError(`Could not answer this question (tried ${attemptsUsed} time(s)): ${validation.reason}`, 422)
+        new AppError(
+          validation.refused
+            ? `I can only answer read-only questions about your own grades, attendance and risk. ${validation.reason}`
+            : `Could not answer this question (tried ${attemptsUsed} time(s)): ${validation.reason}`,
+          422
+        )
       );
     }
 

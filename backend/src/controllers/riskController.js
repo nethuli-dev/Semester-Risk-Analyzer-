@@ -6,11 +6,10 @@ const { assessCourseRisk } = require('../services/riskEngine');
 const { findOwnedCourseOrFail } = require('./courseController');
 
 // Computes a fresh assessment for one course from its current grades and
-// attendance, then persists it as a new RiskAssessment row. Every GET
-// /api/risk call is a real recomputation, not a cached read — and every
-// call also becomes one more point on that course's risk-over-time trend
-// chart (§7 "riskAssessments" is append-only by design, never overwritten
-// in place).
+// attendance. Every GET /api/risk call is a real recomputation, not a cached
+// read. The result is persisted as a new RiskAssessment row only when it
+// differs from the latest stored one (§7 "riskAssessments" is append-only by
+// design, never overwritten in place) — that history powers the trend chart.
 async function computeAndStoreRisk(course, userId) {
   const [gradeEntries, attendanceRecords] = await Promise.all([
     GradeEntry.find({ userId, courseId: course._id }),
@@ -24,14 +23,27 @@ async function computeAndStoreRisk(course, userId) {
     targetGrade: course.targetGrade,
   });
 
-  const stored = await RiskAssessment.create({
-    userId,
-    courseId: course._id,
-    riskScore: assessment.riskScore,
-    riskLevel: assessment.riskLevel,
-    factors: assessment.factors,
-    recommendation: assessment.recommendation,
-  });
+  // Append a history point only when something changed. Every page that shows
+  // risk calls this, so storing on every call would fill the trend chart with
+  // identical dots and make "risk over time" meaningless.
+  const latest = await RiskAssessment.findOne({ userId, courseId: course._id }).sort({ computedAt: -1 });
+  const unchanged =
+    latest &&
+    latest.riskScore === assessment.riskScore &&
+    latest.riskLevel === assessment.riskLevel &&
+    JSON.stringify(latest.factors.map(({ name, contribution }) => ({ name, contribution }))) ===
+      JSON.stringify(assessment.factors.map(({ name, contribution }) => ({ name, contribution })));
+
+  const stored = unchanged
+    ? latest
+    : await RiskAssessment.create({
+        userId,
+        courseId: course._id,
+        riskScore: assessment.riskScore,
+        riskLevel: assessment.riskLevel,
+        factors: assessment.factors,
+        recommendation: assessment.recommendation,
+      });
 
   return { ...assessment, computedAt: stored.computedAt };
 }

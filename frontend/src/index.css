@@ -28,6 +28,7 @@ body {
   .app-shell { display: block !important; height: auto !important; background: #fff !important; }
   .app-scroll { overflow: visible !important; height: auto !important; padding: 0 !important; }
   .print-avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  * { box-shadow: none !important; }
   .print-page { max-width: none !important; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

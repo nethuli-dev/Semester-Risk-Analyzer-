@@ -42,7 +42,7 @@ export default function ReportsPage() {
 
   const { data: report, isLoading: reportLoading } = useQuery({
     queryKey: ['report', term],
-    queryFn: async () => (await client.get(`/reports/${term}`)).data,
+    queryFn: async () => (await client.get(`/reports/${term}`)).data || null,
     enabled: !!term,
     retry: false,
     throwOnError: false,

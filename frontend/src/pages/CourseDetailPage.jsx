@@ -27,7 +27,7 @@ export default function CourseDetailPage() {
       <Link to="/courses" className="mb-4 inline-block text-sm text-indigo-600 hover:underline">
         ← Back to courses
       </Link>
-      <h1 className="mb-1 text-xl font-semibold text-slate-900">{course.courseName}</h1>
+      <h1 className="font-display mb-1 text-2xl font-bold text-slate-900">{course.courseName}</h1>
       <p className="mb-6 text-sm text-slate-500">
         {course.courseCode} · {course.term}
       </p>

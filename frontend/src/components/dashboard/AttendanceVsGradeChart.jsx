@@ -1,4 +1,4 @@
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ZAxis } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ZAxis, ResponsiveContainer } from 'recharts';
 import { RISK_COLORS, RISK_LABELS } from '../../theme/riskColors';
 
 const RISK_LEVELS = ['on-track', 'at-risk', 'failing'];
@@ -24,7 +24,9 @@ export default function AttendanceVsGradeChart({ riskResults }) {
           Not enough logged grades and attendance yet to plot this.
         </p>
       ) : (
-        <ScatterChart width={480} height={260} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+        <div className="h-[280px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+        <ScatterChart margin={{ top: 10, right: 16, bottom: 10, left: 0 }}>
           <CartesianGrid stroke="#e1e0d9" strokeDasharray="3 3" />
           <XAxis
             type="number"
@@ -68,6 +70,8 @@ export default function AttendanceVsGradeChart({ riskResults }) {
             />
           ))}
         </ScatterChart>
+        </ResponsiveContainer>
+        </div>
       )}
     </div>
   );

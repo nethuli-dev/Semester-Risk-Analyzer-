@@ -20,8 +20,8 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-slate-900">Dashboard</h1>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <h1 className="font-display mb-6 text-2xl font-bold text-slate-900">Dashboard</h1>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
         <SemesterOverviewCard riskResults={results} />
         <RiskGaugeCard topRiskResult={topRisk} />
         <TopCoursesCard riskResults={results} />
