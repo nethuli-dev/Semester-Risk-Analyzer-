@@ -1,11 +1,25 @@
-.claude/
+# Dependencies
 node_modules/
+
+# Secrets — never commit real values. Copy .env.example to .env locally.
 .env
-.env.local
-*.log
-npm-debug.log*
-.DS_Store
+.env.*
+!.env.example
+.env.keys
+
+# Build output and test artifacts
 dist/
 build/
 coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
 .vscode/
+.idea/
+.DS_Store
+
+# Local assistant workspace
+.claude/

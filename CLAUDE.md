@@ -231,7 +231,7 @@ accounts; several `gemini-3.x` variants returned capacity/permission errors firs
   reviewed, never run.**
 
 ### What to actually do first tomorrow
-1. Confirm the network switch fixed Atlas connectivity (`cd backend && node -e "require('dns').resolveSrv('_mongodb._tcp.cluster0.fsrl7us.mongodb.net', e=>console.log(e?'FAIL':'OK'))"`).
+1. Confirm the network switch fixed Atlas connectivity (`cd backend && node -e "require('dns').resolveSrv('_mongodb._tcp.<your-cluster-host>', e=>console.log(e?'FAIL':'OK'))"`).
 2. `cd backend && npm test` — this is the first time `tests/courses.test.js`,
    `tests/auth.test.js` (DB-dependent parts), and the full suite together will have run
    successfully end to end. Report the real pass/fail count, don't assume green.
@@ -241,3 +241,23 @@ accounts; several `gemini-3.x` variants returned capacity/permission errors firs
    report on `/reports` and sanity-check it against the Dashboard.
 4. Fix whatever's actually broken (there will likely be something — none of Phases 3–5 have
    had a real DB round trip yet). Only once that's done, move to Phase 6 per CLAUDE.md rule 1.
+
+---
+
+## Update — 2026-09-19 (supersedes the "not verified" notes above)
+
+Atlas connectivity is restored and the items marked unverified in Phases 2–5 have now had a real
+DB round trip. `cd backend && npm test` → **59/59 passing across 6 suites**.
+
+Bugs found by that first live run and fixed: the Ask AI forced `$match` compared a string `userId`
+to an `ObjectId` (aggregate() doesn't cast, so answers were silently empty; now cast in
+`queryController`, with a regression test in `tests/pipelineExecution.test.js`); the prompt now
+lists exact enum values (case-sensitive matches); results map the student's own course ids to
+names; "Below target grade" is flagged `informational` so factors reconcile with the score.
+
+Added at the user's request (beyond PROJECT_PLAN): Home page, interactive Ask AI thread, interactive
+Reports with PDF (print) / Markdown export, and a Profile page with change-password and
+sign-out-everywhere.
+
+Still open: Phase 6 (testing/polish/deploy, §9 checklist), frontend not yet checked in a browser by
+the assistant (Chrome extension unavailable), no frontend automated tests.
