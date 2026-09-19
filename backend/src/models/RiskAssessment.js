@@ -5,6 +5,8 @@ const factorSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     contribution: { type: Number, required: true },
+    // true = shown to the student but NOT part of riskScore (e.g. gap to target).
+    informational: { type: Boolean, default: false },
   },
   { _id: false }
 );

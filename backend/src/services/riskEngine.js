@@ -108,6 +108,10 @@ function computeFactors(trajectoryGrade, attendanceRate, targetGrade) {
     factors.push({
       name: 'Below target grade',
       contribution: Math.round((targetGrade - trajectoryGrade) * 100) / 100,
+      // Deliberately outside computeRiskScore: falling short of a personal
+      // target isn't the same as being at risk of failing. Flagged so the
+      // listed contributions are never mistaken for the score's components.
+      informational: true,
     });
   }
 

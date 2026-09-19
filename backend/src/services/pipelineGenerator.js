@@ -1,6 +1,6 @@
 const { getClient, MODEL } = require('./geminiClient');
 const { SCHEMA_MAP } = require('./pipelineValidator');
-const { ALLOWED_PIPELINE_STAGES } = require('../config/constants');
+const { ALLOWED_PIPELINE_STAGES, ATTENDANCE_STATUSES } = require('../config/constants');
 
 // Structured-output schema: forces the model to return exactly this shape
 // (no prose, no markdown fences) rather than hoping it follows instructions.
@@ -72,6 +72,11 @@ Rules:
 
 Collections and their fields (userId is handled automatically — never reference it):
 ${describeSchema()}
+
+Exact stored values (string matching in MongoDB is case-sensitive — copy these verbatim, all lowercase):
+- attendanceRecords.status is one of: ${ATTENDANCE_STATUSES.join(', ')}
+- riskAssessments.riskLevel is one of: on-track, at-risk, failing
+- gradeEntries.category and courses.term are free text the student typed (e.g. "Midterm", "Fall 2026"); if the question doesn't name one exactly, group by the field instead of guessing a filter value.
 
 ${FEW_SHOT_EXAMPLES}`;
 }

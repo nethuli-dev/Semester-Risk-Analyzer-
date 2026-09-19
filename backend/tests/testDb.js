@@ -1,29 +1,5 @@
 require('dotenv').config();
-const dns = require('dns');
 const mongoose = require('mongoose');
-
-// This machine's default DNS resolver intermittently fails SRV lookups for
-// the Atlas hostname specifically (confirmed: plain A-record lookups for
-// other domains succeed throughout the same outage) while public resolvers
-// handle the same query reliably. dns.setServers() only redirects Node's
-// dns.resolve*() family (used for the SRV/TXT lookup mongodb+srv:// needs);
-// dns.lookup() — used for the individual shard hostnames afterwards — goes
-// through the OS resolver regardless, so it's patched too, with the
-// original behavior kept as a fallback if resolve4 itself fails.
-dns.setServers(['8.8.8.8', '1.1.1.1']);
-const originalLookup = dns.lookup;
-dns.lookup = (hostname, options, callback) => {
-  if (typeof options === 'function') {
-    callback = options;
-    options = {};
-  }
-  dns.resolve4(hostname, (err, addresses) => {
-    if (err || !addresses || !addresses.length) {
-      return originalLookup(hostname, options, callback);
-    }
-    callback(null, addresses[0], 4);
-  });
-};
 
 // Tests run against a dedicated test database on the same Atlas cluster as
 // dev, not a local in-memory mongod. mongodb-memory-server's locally-spawned

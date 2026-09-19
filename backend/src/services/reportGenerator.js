@@ -11,7 +11,10 @@ const { getClient, MODEL } = require('./geminiClient');
 function buildPrompt(studentName, term, courseSummaries) {
   const courseLines = courseSummaries
     .map((c) => {
-      const factorText = c.factors.map((f) => `${f.name} (contributes ${f.contribution})`).join('; ') || 'none';
+      const factorText =
+        c.factors
+          .map((f) => (f.informational ? `${f.name} (${f.contribution} points, informational only — not part of the risk score)` : `${f.name} (contributes ${f.contribution})`))
+          .join('; ') || 'none';
       return `- ${c.courseName} (${c.courseCode}): risk level "${c.riskLevel}", risk score ${c.riskScore}/100, grade trajectory ${
         c.trajectoryGrade === null ? 'not enough data yet' : `${c.trajectoryGrade}%`
       }, attendance ${c.attendanceRate === null ? 'not enough data yet' : `${c.attendanceRate}%`}. Contributing factors: ${factorText}. Recommendation: ${c.recommendation}`;
@@ -25,6 +28,7 @@ const SYSTEM_INSTRUCTION = `You write a semester progress report for a student, 
 
 Rules:
 - Use ONLY the numbers and facts provided in the prompt. Never invent, estimate, or recalculate a grade, risk score, or attendance figure.
+- Do not characterize courses beyond the data (no subject areas like "humanities" or "STEM", no guesses about causes, effort, or study habits).
 - Write in clear, honest, supportive prose — not alarmist, not sugar-coated.
 - Synthesize the contributing factors and recommendation into natural sentences of your own — do not quote factor names or "contributes N" figures verbatim, and do not restate the recommendation near-word-for-word.
 - Structure as Markdown: a one-paragraph overall summary first, then a short subsection per course that is "at-risk" or "failing" (skip courses that are "on-track" unless there are only on-track courses, in which case briefly note that), then one closing paragraph with concrete next steps.

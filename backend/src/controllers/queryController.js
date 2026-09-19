@@ -1,4 +1,5 @@
 const { z } = require('zod');
+const mongoose = require('mongoose');
 const AppError = require('../utils/AppError');
 const Query = require('../models/Query');
 const Course = require('../models/Course');
@@ -35,8 +36,33 @@ async function generateAndValidate({ question, feedback, courseName, userId, cou
   } catch (err) {
     return { attempt: null, validation: { valid: false, reason: `Pipeline generation failed: ${err.message}` } };
   }
-  const validation = validatePipeline(attempt.pipeline, { collection: attempt.collection, userId, courseId });
+  // .aggregate() does NOT auto-cast strings to ObjectId the way find() does,
+  // so a forced {$match: {userId: "<string>"}} silently matches nothing.
+  // Cast here, once, on the way into the validator's forced $match.
+  const validation = validatePipeline(attempt.pipeline, {
+    collection: attempt.collection,
+    userId: new mongoose.Types.ObjectId(userId),
+    courseId: courseId ? new mongoose.Types.ObjectId(courseId) : undefined,
+  });
   return { attempt, validation };
+}
+
+// Pipelines can't $lookup across collections, so a "per course" answer comes
+// back keyed by a raw courseId. Swap any value that is exactly one of THIS
+// student's own course ids for its name, so neither the summary nor the chart
+// labels show opaque ids. Scoped by userId, so it can't reveal another
+// student's course names.
+async function replaceCourseIdsWithNames(result, userId) {
+  const courses = await Course.find({ userId }).select('courseName');
+  const namesById = new Map(courses.map((c) => [c._id.toString(), c.courseName]));
+  const swap = (value) => {
+    if (value && typeof value === 'object' && !(value instanceof Date) && typeof value.toHexString !== 'function') {
+      return Array.isArray(value) ? value.map(swap) : Object.fromEntries(Object.entries(value).map(([k, v]) => [k, swap(v)]));
+    }
+    const key = value == null ? null : String(value);
+    return key && namesById.has(key) ? namesById.get(key) : value;
+  };
+  return result.map(swap);
 }
 
 // generate -> validate -> (if invalid: regenerate ONCE with the
@@ -90,7 +116,8 @@ async function askQuestion(req, res, next) {
     }
 
     const Model = COLLECTION_MODELS[attempt.collection];
-    const result = await executePipeline(Model, validation.pipeline);
+    const rawResult = await executePipeline(Model, validation.pipeline);
+    const result = await replaceCourseIdsWithNames(rawResult, req.user.id);
     const summary = await summarizeResult({ question, result });
     const chartConfig = { type: summary.chartType, data: result };
 

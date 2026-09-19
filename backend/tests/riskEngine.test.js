@@ -141,4 +141,20 @@ describe('riskEngine.assessCourseRisk (hand-computed cases)', () => {
 
     expect(result.factors.some((f) => f.name === 'Below target grade')).toBe(true);
   });
+
+  test('scored factors sum to riskScore; informational factors are excluded from the sum', () => {
+    const result = assessCourseRisk({
+      gradingScheme: [{ category: 'Midterm', weight: 100 }],
+      gradeEntries: [{ category: 'Midterm', score: 50, maxScore: 100 }],
+      attendanceRecords: [
+        { status: 'present' },
+        { status: 'absent' },
+        { status: 'absent' },
+      ],
+      targetGrade: 80,
+    });
+    const scoredSum = result.factors.filter((f) => !f.informational).reduce((sum, f) => sum + f.contribution, 0);
+    expect(Math.round(scoredSum * 100) / 100).toBe(result.riskScore);
+    expect(result.factors.find((f) => f.name === 'Below target grade').informational).toBe(true);
+  });
 });
